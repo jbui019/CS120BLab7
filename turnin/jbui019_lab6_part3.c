@@ -12,7 +12,7 @@
 #include "simAVRHeader.h"
 #endif
 
-enum States{start, d1, d2, d3}state;
+enum States{init, A0press, A0remain, A0release, A1press, A1remain, A1release, reset}state;
 volatile unsigned char TimerFlag = 0;
 
 unsigned long _avr_timer_M = 1;
@@ -49,9 +49,11 @@ void TimerSet(unsigned long M){
 	_avr_timer_M = M;
 	_avr_timer_cntcurr = _avr_timer_M;
 }
+
+unsigned char counter = 0;
+
 void tick(){
 	unsigned char PB = PORTC;
-	unsigned char flag = 0;
 	unsigned char A1 = ~PINA & 0x02;
 	unsigned char A0 = ~PINA & 0x01;
 	
@@ -69,7 +71,7 @@ void tick(){
 				state = A1press;
 			}
 			else{
-				state = INIT;
+				state = init;
 			}
 			break;
 				

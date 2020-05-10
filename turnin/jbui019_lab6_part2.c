@@ -12,7 +12,7 @@
 #include "simAVRHeader.h"
 #endif
 
-enum States{start, d1, d2, d3, wait restart }state;
+enum States{start, d1, d2, d3, wait, restart }state;
 volatile unsigned char TimerFlag = 0;
 
 unsigned long _avr_timer_M = 1;
@@ -85,7 +85,7 @@ void tick(){
 			
 		case wait:
 			if((~PINA & 0x01) == 0x01){
-				state = WAIT;
+				state = wait;
 			}
 			else{
 				state = restart;
