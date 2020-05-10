@@ -12,9 +12,10 @@
 #include "simAVRHeader.h"
 #endif
 
-enum States{start, sequency, press, waitRelease, stay, reset }state;
+enum States{start, sequence, press, waitRelease, stay, reset }state;
 volatile unsigned char TimerFlag = 0;
-
+unsigned char A;
+unsigned char tmpB = 0x00;
 unsigned long _avr_timer_M = 1;
 unsigned long _avr_timer_cntcurr = 0;
 
@@ -124,7 +125,7 @@ int main(void) {
 	DDRA = 0x00; PORTA = 0xFF;
 	DDRB = 0xFF; PORTB = 0x00;
 	state = start;
-	TimerSet(15)
+	TimerSet(15);
 	TimerOn();
     /* Insert your solution below */
     while (1) {
