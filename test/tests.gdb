@@ -26,18 +26,17 @@
 echo ======================================================\n
 echo Running all tests..."\n\n
 
-test "Intiialize to PORTB: 0x01"
-expectPORTB 0x01
+test "Counter starts at 7 ... PINA: 0xFF =>PORTB: 0x07"
+set state = init
+setPINA 0xFF
+continue 2
+expectPORTB 0x07
 checkResult
 
-test "1 period => PORTB: 0x02"
+test "Pressing increment... PINA: 0xFE => PORTB: 0x08"
+setPINA 0xFE
 continue 2
-expectPORTB 0x02
-checkResult
-
-test "2 period => PORTB: 0x01"
-continue 2
-expectPORTB 0x01
+expectPORTB 0x08
 checkResult
 
 # Report on how many tests passed/tests ran

@@ -53,7 +53,7 @@ void TimerSet(unsigned long M){
 unsigned char counter = 0;
 
 void tick(){
-	unsigned char PB = PORTC;
+	unsigned char PB = PORTB;
 	unsigned char A1 = ~PINA & 0x02;
 	unsigned char A0 = ~PINA & 0x01;
 	
@@ -157,35 +157,35 @@ void tick(){
 	
 	switch(state){
 	case init:
-		PORTC = 7;
+		PORTB = 7;
 		break;
 	case A0press:
 		if(PB < 9){
-			PORTC = PB + 1;
+			PORTB = PB + 1;
 		}
 		break;
 	case A0remain:
 		counter++;
 		if(counter == 100 && PB < 9){
-			PORTC = PB+1;
+			PORTB = PB+1;
 			counter = 0;
 		}
 		break;
 	case A1press:
 		if(PB > 0){
-			PORTC = PB -1;
+			PORTB = PB -1;
 		}
 		break;
 	case A1remain:
 		counter++;
 		if(counter == 100 && PB > 0)
 		{
-			PORTC = PB-1;
+			PORTB = PB-1;
 			counter = 0;
 		}
 		break;
 	case reset:
-		PORTC = 0;
+		PORTB = 0;
 		break;
 	default:
 		break;
@@ -195,7 +195,7 @@ void tick(){
 int main(void) {
     /* Insert DDR and PORT initializations */
 	DDRA = 0x00; PORTA = 0xFF;
-	DDRC = 0xFF; PORTC = 0x00;
+	DDRB = 0xFF; PORTB = 0x00;
 	state = init;
 	TimerSet(1);
 	TimerOn();
