@@ -126,7 +126,7 @@ switch(state){
 		case stay:
 			break;
 		case reset:
-			tmpB = 0x01;
+			tmpB = 0x00;
 			break;
 		default:
 			break;
@@ -139,7 +139,7 @@ int main(void) {
 	DDRA = 0x00; PORTA = 0xFF;
 	DDRB = 0xFF; PORTB = 0x00;
 	state = start;
-	TimerSet(300);
+	TimerSet(15);
 	TimerOn();
     /* Insert your solution below */
     while (1) {
