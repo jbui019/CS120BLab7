@@ -12,7 +12,7 @@
 #include "simAVRHeader.h"
 #endif
 
-enum States{start, d1, d2, d3, wait, restart }state;
+enum States{start, sequency, press, waitRelease, stay, reset }state;
 volatile unsigned char TimerFlag = 0;
 
 unsigned long _avr_timer_M = 1;
@@ -49,101 +49,90 @@ void TimerSet(unsigned long M){
 	_avr_timer_M = M;
 	_avr_timer_cntcurr = _avr_timer_M;
 }
+unsigned char flag = 0;
 void tick(){
-	switch(state){//transitions
+switch(state){
 		case start:
-			PORTB = 0x00;
-			state = d1;
+			state = sequence;
 			break;
-
-		case d1:
-			if((~PINA & 0x01) == 0x01){
-				state = wait;
+		case sequence:
+			if(A) {
+				state = press;
 			}
-			else{
-				state = d2;
-			}
+			else
+				state = sequence; 
+			TimerFlag = 0;
 			break;
-		
-		case d2:
-			if((~PINA & 0x01) == 0x01){
-				state = wait;	
-			}
-			else{
-				state = d3;
-			}
+		case press:
+			if(A) 
+				state = waitRelease;
+			else if(!flag) 
+				state = stay;
+			else if(flag) 
+				state = reset;
 			break;
-
-		case d3:
-			if((~PINA & 0x01) == 0x01){
-				state = wait;
-			}
-			else{
-				state = d1;
-			}
+		case waitRelease:
+			if(A) 
+				state = waitRelease;
+			else if(flag) 
+				state = stay;
+			else if(!flag) 
+				state = reset;
 			break;
-			
-		case wait:
-			if((~PINA & 0x01) == 0x01){
-				state = wait;
-			}
-			else{
-				state = restart;
-			}
+		case stay:
+			if(A) 
+				state = press;
+			else 
+				state = stay;
 			break;
-			
-		case restart:
-			if((~PINA & 0x01) == 0x01){
-				state = d1;
-			}
-			else{
-				state = restart;
-			}
+		case reset:
+			state = start;
 			break;
-			
 		default:
+			state = start;
 			break;
-
 	}
 	
-	switch(state){//actions
+	switch(state){
 		case start:
+			tmpB = 0x01;
 			break;
-
-		case d1:
-			PORTB = 0x01;
+		case sequence:
+			if(tmpB == 0 || tmpB == 4)
+				tmpB = 1;
+			else
+				tmpB = tmpB <<1;
 			break;
-
-		case d2:
-			PORTB = 0x02;
+		case press:
+			flag = !flag;
 			break;
-
-		case d3: 
-			PORTB = 0x04;
+		case waitRelease:
 			break;
-		
-		case wait:
+		case stay:
 			break;
-			
-		case restart:
+		case reset:
+			tmpB = 0x01;
 			break;
-		
 		default:
 			break;
-	
-	}	
+		}
+		PORTB = tmpB;
+		
 }
 int main(void) {
     /* Insert DDR and PORT initializations */
 	DDRA = 0x00; PORTA = 0xFF;
 	DDRB = 0xFF; PORTB = 0x00;
 	state = start;
-	TimerSet(300);
+	TimerSet(15)
 	TimerOn();
     /* Insert your solution below */
     while (1) {
+	A = ~PINA & 0x01;
 	tick();	
-	while(!TimerFlag){}
+	while(!TimerFlag){
+		A = ~PINA & 0x01;if(A) {tick();}
+	}
 	TimerFlag = 0;
     }
     return 1;
