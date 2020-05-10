@@ -109,8 +109,11 @@ switch(state){
 			if(tmpB == 0 || tmpB == 4){
 				tmpB = 1;
 			}
-			else{
-				tmpB = tmpB <<1;
+			else if(tmpB == 1){
+				tmpB = 2;
+			}
+			else if(tmpB == 2){
+				tmpB = 4;	
 			}
 			break;
 		case press:
