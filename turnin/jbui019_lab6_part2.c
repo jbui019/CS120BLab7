@@ -60,31 +60,38 @@ switch(state){
 			if(A) {
 				state = press;
 			}
-			else
+			else{
 				state = sequence; 
+			}
 			TimerFlag = 0;
 			break;
 		case press:
-			if(A) 
+			if(A){ 
 				state = waitRelease;
+			}
 			else if(!flag) 
 				state = stay;
 			else if(flag) 
 				state = reset;
 			break;
 		case waitRelease:
-			if(A) 
+			if(A){
 				state = waitRelease;
-			else if(flag) 
+			}
+			else if(flag){
 				state = stay;
-			else if(!flag) 
+			}
+			else if(!flag){ 
 				state = reset;
+			}
 			break;
 		case stay:
-			if(A) 
+			if(A){ 
 				state = press;
-			else 
+			}
+			else{ 
 				state = stay;
+			}
 			break;
 		case reset:
 			state = start;
@@ -99,10 +106,12 @@ switch(state){
 			tmpB = 0x01;
 			break;
 		case sequence:
-			if(tmpB == 0 || tmpB == 4)
+			if(tmpB == 0 || tmpB == 4){
 				tmpB = 1;
-			else
+			}
+			else{
 				tmpB = tmpB <<1;
+			}
 			break;
 		case press:
 			flag = !flag;
@@ -132,7 +141,8 @@ int main(void) {
 	A = ~PINA & 0x01;
 	tick();	
 	while(!TimerFlag){
-		A = ~PINA & 0x01;if(A) {tick();}
+		A = ~PINA & 0x01;
+		if(A){tick();}
 	}
 	TimerFlag = 0;
     }
