@@ -50,49 +50,152 @@ void TimerSet(unsigned long M){
 	_avr_timer_cntcurr = _avr_timer_M;
 }
 void tick(){
-	switch(state){//transitions
-		case start:
-			state = d1;
+	unsigned char PB = PORTC;
+	unsigned char flag = 0;
+	unsigned char A1 = ~PINA & 0x02;
+	unsigned char A0 = ~PINA & 0x01;
+	
+	if (A0 && A1){ 
+		state = reset;
+	}
+	else {
+		switch(state){
+		 
+		case init:
+			if(A0){
+				state = A0press;
+			}
+			else if(A1){
+				state = A1press;
+			}
+			else{
+				state = INIT;
+			}
 			break;
-
-		case d1:
-			state = d2;
+				
+		case A0press:
+			counter = 0;
+			if(A0){
+				state = A0remain;
+			}
+			else if(!A0){
+				state = A0release;
+			}
+			else{
+				state = A0remain;
+			}
 			break;
-		
-		case d2:
-			state = d3;
+				
+		case A1press:
+			counter = 0;
+			if(A1) state = A1remain;
+			else if(!A1) state = A1release;
+			else state = A1remain;
 			break;
-
-		case d3:
-			state = d1;	
+				
+		case A0remain:
+			if(A0){
+				state = A0remain;
+			}
+			else{
+				state = A0release;
+			}
+			break;
+				
+		case A1remain:
+			if(A1){
+				state = A1remain;
+			}
+			else{
+				state = A1release;
+			}
+			break;
+				
+		case A0release:
+			counter = 0;
+			if(A0){
+				state = A0press;
+			}
+			else if(A1){
+				state = A1press;
+			}
+			else{
+				state = A0release;
+			}
+			break;
+		case A1release:
+			counter = 0;
+			if(A0){
+				state = A0press;
+			}
+			else if(A1){
+				state = A1press;
+			}
+			else{
+				state = A1release;
+			}
+			break;
+		case reset:
+			if(A0){
+				state = A0press;
+			}
+			else if(A1){
+				state = A1press;
+			}
+			else{
+				state = reset;
+			}
+			break;
+				
 		default:
-			state =  start;
-			break;
-
+			state = init;
+			break; 
+		}
 	}
 	
-	switch(state){//actions
-		case start:
-			break;
+	switch(state){
+	case init:
+		PORTC = 7;
+		break;
+	case A0press:
+		if(PB < 9){
+			PORTC = PB + 1;
+		}
+		break;
+	case A0remain:
+		counter++;
+		if(counter == 100 && PB < 9){
+			PORTC = PB+1;
+			counter = 0;
+		}
+		break;
+	case A1press:
+		if(PB > 0){
+			PORTC = PB -1;
+		}
+		break;
+	case A1remain:
+		counter++;
+		if(counter == 100 && PB > 0)
+		{
+			PORTC = PB-1;
+			counter = 0;
+		}
+		break;
+	case reset:
+		PORTC = 0;
+		break;
+	default:
+		break;
+	}
 
-		case d1:
-			PORTB = 0x01;
-			break;
-
-		case d2:
-			PORTB = 0x02;
-			break;
-
-		case d3: 
-			PORTB = 0x01;
-			break;
-	
-	}	
 }
 int main(void) {
     /* Insert DDR and PORT initializations */
-	DDRB = 0xFF; PORTB = 0x00;
-	TimerSet(1000);
+	DDRA = 0x00; PORTA = 0xFF;
+	DDRC = 0xFF; PORTC = 0x00;
+	state = init;
+	TimerSet(1);
 	TimerOn();
     /* Insert your solution below */
     while (1) {
