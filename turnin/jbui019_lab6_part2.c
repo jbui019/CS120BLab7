@@ -12,7 +12,7 @@
 #include "simAVRHeader.h"
 #endif
 
-enum States{start, d1, d2, d3}state;
+enum States{start, d1, d2, d3, wait restart }state;
 volatile unsigned char TimerFlag = 0;
 
 unsigned long _avr_timer_M = 1;
@@ -52,21 +52,56 @@ void TimerSet(unsigned long M){
 void tick(){
 	switch(state){//transitions
 		case start:
+			PORTB = 0x00;
 			state = d1;
 			break;
 
 		case d1:
-			state = d2;
+			if((~PINA & 0x01) == 0x01){
+				state = wait;
+			}
+			else{
+				state = d2;
+			}
 			break;
 		
 		case d2:
-			state = d3;
+			if((~PINA & 0x01) == 0x01){
+				state = wait;	
+			}
+			else{
+				state = d3;
+			}
 			break;
 
 		case d3:
-			state = d1;	
+			if((~PINA & 0x01) == 0x01){
+				state = wait;
+			}
+			else{
+				state = d1;
+			}
+			break;
+			
+		case wait:
+			if((~PINA & 0x01) == 0x01){
+				state = WAIT;
+			}
+			else{
+				state = restart;
+			}
+			break;
+			
+		case restart:
+			if((~PINA & 0x01) == 0x01){
+				state = d1;
+			}
+			else{
+				state = restart;
+			}
+			break;
+			
 		default:
-			state =  start;
 			break;
 
 	}
@@ -84,15 +119,26 @@ void tick(){
 			break;
 
 		case d3: 
-			PORTB = 0x01;
+			PORTB = 0x04;
+			break;
+		
+		case wait:
+			break;
+			
+		case restart:
+			break;
+		
+		default:
 			break;
 	
 	}	
 }
 int main(void) {
     /* Insert DDR and PORT initializations */
+	DDRA = 0x00; PORTA = 0xFF;
 	DDRB = 0xFF; PORTB = 0x00;
-	TimerSet(1000);
+	state = start;
+	TimerSet(300);
 	TimerOn();
     /* Insert your solution below */
     while (1) {
