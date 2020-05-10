@@ -103,7 +103,7 @@ switch(state){
 	
 	switch(state){
 		case start:
-			tmpB = 0x01;
+			tmpB = 0x00;
 			break;
 		case sequence:
 			if(tmpB == 0 || tmpB == 4){
