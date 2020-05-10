@@ -26,6 +26,20 @@
 echo ======================================================\n
 echo Running all tests..."\n\n
 
+test "Intiialize to PORTB: 0x01"
+expectPORTB 0x01
+checkResult
+
+test "1 period => PORTB: 0x02"
+continue 2
+expectPORTB 0x02
+checkResult
+
+test "2 period => PORTB: 0x01"
+continue 2
+expectPORTB 0x01
+checkResult
+
 # Report on how many tests passed/tests ran
 set $passed=$tests-$failed
 eval "shell echo Passed %d/%d tests.\n",$passed,$tests

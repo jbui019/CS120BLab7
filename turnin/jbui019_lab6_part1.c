@@ -84,7 +84,7 @@ void tick(){
 			break;
 
 		case d3: 
-			PORTB = 0x04;
+			PORTB = 0x01;
 			break;
 	
 	}	
