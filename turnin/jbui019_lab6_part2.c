@@ -69,10 +69,12 @@ switch(state){
 			if(A){ 
 				state = waitRelease;
 			}
-			else if(!flag) 
+			else if(!flag){ 
 				state = stay;
-			else if(flag) 
+			}
+			else if(flag){ 
 				state = reset;
+			}
 			break;
 		case waitRelease:
 			if(A){
