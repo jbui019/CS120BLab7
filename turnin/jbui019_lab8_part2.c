@@ -12,10 +12,8 @@
 #include "simAVRHeader.h"
 #endif
 
-enum States{start, sequence, press, waitRelease, stay, reset }state;
 volatile unsigned char TimerFlag = 0;
-unsigned char A;
-unsigned char tmpB = 0x00;
+
 unsigned long _avr_timer_M = 1;
 unsigned long _avr_timer_cntcurr = 0;
 
@@ -51,105 +49,159 @@ void TimerSet(unsigned long M){
 	_avr_timer_cntcurr = _avr_timer_M;
 }
 unsigned char flag = 0;
+unsigned char i = 0x00;
+enum States {Start, LED1, LED2, LED3, CHECK, WAIT, RESTART}state;
 void tick(){
-switch(state){
-		case start:
-			state = sequence;
+	switch(state) // transitions
+	{ 
+		case Start:
+		{
+			PORTB = 0x00;
+			i = 5;
+			LCD_Cursor(1);
+			LCD_WriteData('5');
+			state = LED1; 
 			break;
-		case sequence:
-			if(A) {
-				state = press;
+		}
+		
+		case LED1:
+		{
+			if((~PINA & 0x01) == 0x01){
+				state = CHECK; break;
 			}
 			else{
-				state = sequence; 
+				state = LED2; break;
 			}
-			TimerFlag = 0;
-			break;
-		case press:
-			if(A){ 
-				state = waitRelease;
+		}
+		
+		case LED2:
+		{
+			if((~PINA & 0x01) == 0x01){
+				state = CHECK; break;
 			}
-			else if(!flag){ 
-				state = stay;
+			else{
+				state = LED3; break;
 			}
-			else if(flag){ 
-				state = reset;
+		}
+		
+		case LED3:
+		{
+			if((~PINA & 0x01) == 0x01){
+				state = CHECK; break;
 			}
-			break;
-		case waitRelease:
-			if(A){
-				state = waitRelease;
+			else{
+				state = LED1; break;
 			}
-			else if(flag){
-				state = stay;
+		}
+		
+		case CHECK:
+		{
+			state = WAIT; break;
+		}
+		
+		case WAIT:
+		{
+			if((~PINA & 0x01) == 0x01){
+				state = WAIT; break;
 			}
-			else if(!flag){ 
-				state = reset;
+			else{
+				state = RESTART; break;
 			}
-			break;
-		case stay:
-			if(A){ 
-				state = press;
+		}
+		
+		case RESTART:
+		{
+			if((~PINA & 0x01) == 0x01){
+				if(i >= 9){
+					i = 5;
+					LCD_ClearScreen();
+					LCD_Cursor(1);
+					LCD_WriteData('5');
+				}
+				state = LED1;
+				break;	
 			}
-			else{ 
-				state = stay;
+			else{
+				state = RESTART; break;
 			}
-			break;
-		case reset:
-			state = start;
-			break;
+		}
+		
 		default:
-			state = start;
 			break;
 	}
 	
-	switch(state){
-		case start:
-			tmpB = 0x00;
+	switch(state) //state actions
+	{
+		case Start:
 			break;
-		case sequence:
-			if(tmpB == 0 || tmpB == 4){
-				tmpB = 1;
-			}
-			else if(tmpB == 1){
-				tmpB = 2;
-			}
-			else if(tmpB == 2){
-				tmpB = 4;	
-			}
-			break;
-		case press:
-			flag = !flag;
-			break;
-		case waitRelease:
-			break;
-		case stay:
-			break;
-		case reset:
-			tmpB = 0x00;
-			break;
-		default:
+			
+		case LED1:
+		{
+			PORTB = 0x01;
 			break;
 		}
-		PORTB = tmpB;
 		
+		case LED2:
+		{
+			PORTB = 0x02;
+			break;
+		}
+		
+		case LED3:
+		{
+			PORTB = 0x04;
+			break;
+		}
+		
+		case CHECK:
+		{
+			if(PORTB == 0x02){
+				++i;
+				if(i >= 9){
+					LCD_DisplayString(1, "WINNER!"); break;
+				}
+				else{
+					LCD_Cursor(1);
+					LCD_WriteData(i + '0'); break;
+				}
+			}
+			else{
+				--i;
+				if(i <= 0){
+					i = 0;
+				}
+				LCD_Cursor(1);
+				LCD_WriteData(i + '0'); break;
+			}
+			
+		}
+		
+		case WAIT:
+			break;
+		
+		case RESTART:
+			break;
+			
+		default:
+			break;
+	}
 }
 int main(void) {
     /* Insert DDR and PORT initializations */
 	DDRA = 0x00; PORTA = 0xFF;
 	DDRB = 0xFF; PORTB = 0x00;
-	state = start;
-	TimerSet(15);
+	DDRC = 0xFF; PORTC = 0x00;
+	DDRD = 0xFF: PORTD = 0x00;
+	LCD_init();
+	
+	TimerSet(300);
 	TimerOn();
     /* Insert your solution below */
     while (1) {
-	A = ~PINA & 0x01;
 	tick();	
 	while(!TimerFlag){
-		A = ~PINA & 0x01;
-		if(A){tick();}
+		TimerFlag = 0;
 	}
-	TimerFlag = 0;
     }
     return 1;
 }
