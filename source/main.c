@@ -10,11 +10,10 @@
 #include <avr/io.h>
 #ifdef _SIMULATE_
 #include "simAVRHeader.h"
+#include "io.c"
 #endif
 
-enum States{init, A0press, A0remain, A0release, A1press, A1remain, A1release, reset}state;
 volatile unsigned char TimerFlag = 0;
-
 unsigned long _avr_timer_M = 1;
 unsigned long _avr_timer_cntcurr = 0;
 
@@ -49,155 +48,130 @@ void TimerSet(unsigned long M){
 	_avr_timer_M = M;
 	_avr_timer_cntcurr = _avr_timer_M;
 }
-
-unsigned char counter = 0;
+unsigned char i = 0x00;
+unsigned char c = '0';
+enum States {Start, INIT, INC, DEC, WAIT, RESET}state;
 
 void tick(){
-	unsigned char PB = PORTB;
-	unsigned char A1 = ~PINA & 0x02;
-	unsigned char A0 = ~PINA & 0x01;
-	
-	if (A0 && A1){ 
-		state = reset;
-	}
-	else {
-		switch(state){
-		 
-		case init:
-			if(A0){
-				state = A0press;
+	switch(state) // transitions
+	{ 
+		case Start:
+			LCD_Cursor(1);
+			LCD_WriteData('0');
+			state = INIT; 
+			break;
+		
+		
+		case INIT:
+			if((~PINA & 0x03) == 0x01){
+				state = INC; break;
 			}
-			else if(A1){
-				state = A1press;
+			else if((~PINA & 0x03) == 0x02){
+				state = DEC; break;
+			}
+			else if((~PINA & 0x03) == 0x03){
+				state = RESET; break;
 			}
 			else{
-				state = init;
+				state = INIT; break;
 			}
-			break;
-				
-		case A0press:
-			counter = 0;
-			if(A0){
-				state = A0remain;
-			}
-			else if(!A0){
-				state = A0release;
-			}
-			else{
-				state = A0remain;
-			}
-			break;
-				
-		case A1press:
-			counter = 0;
-			if(A1) state = A1remain;
-			else if(!A1) state = A1release;
-			else state = A1remain;
-			break;
-				
-		case A0remain:
-			if(A0){
-				state = A0remain;
-			}
-			else{
-				state = A0release;
-			}
-			break;
-				
-		case A1remain:
-			if(A1){
-				state = A1remain;
-			}
-			else{
-				state = A1release;
-			}
-			break;
-				
-		case A0release:
-			counter = 0;
-			if(A0){
-				state = A0press;
-			}
-			else if(A1){
-				state = A1press;
-			}
-			else{
-				state = A0release;
-			}
-			break;
-		case A1release:
-			counter = 0;
-			if(A0){
-				state = A0press;
-			}
-			else if(A1){
-				state = A1press;
-			}
-			else{
-				state = A1release;
-			}
-			break;
-		case reset:
-			if(A0){
-				state = A0press;
-			}
-			else if(A1){
-				state = A1press;
-			}
-			else{
-				state = reset;
-			}
-			break;
-				
-		default:
-			state = init;
-			break; 
-		}
-	}
-	
-	switch(state){
-	case init:
-		PORTB = 7;
-		break;
-	case A0press:
-		if(PB < 9){
-			PORTB = PB + 1;
-		}
-		break;
-	case A0remain:
-		counter++;
-		if(counter == 100 && PB < 9){
-			PORTB = PB+1;
-			counter = 0;
-		}
-		break;
-	case A1press:
-		if(PB > 0){
-			PORTB = PB -1;
-		}
-		break;
-	case A1remain:
-		counter++;
-		if(counter == 100 && PB > 0)
+		
+		
+		case INC:
 		{
-			PORTB = PB-1;
-			counter = 0;
+			state = WAIT; break;
 		}
-		break;
-	case reset:
-		PORTB = 0;
-		break;
-	default:
-		break;
+		
+		case DEC:
+		{
+			state = WAIT; break;
+		}
+		
+		case WAIT:
+		{
+			if((~PINA & 0x03) == 0x01){
+				state = INC; break;
+			}
+			else if((~PINA & 0x03) == 0x02){
+				state = DEC; break;
+			}
+			else if((~PINA & 0x03) == 0x03){
+				state = RESET; break;
+			}
+			else if((~PINA & 0x03) == 0x00){
+				state = INIT; break;
+			}
+			else {
+				state = WAIT; break;
+			}
+		}
+		
+		case RESET:
+		{
+			if((~PINA & 0x03) == 0x00){
+				state = INIT; break;
+			}
+			else{
+				state = RESET; break;
+			}
+		}
+		
+		default:
+			break;
 	}
-
+	
+	switch(state) //state actions
+	{
+		case Start:
+			break;
+			
+		case INIT:
+			break;
+			
+		case INC:
+		{
+			if(i >= 9){
+				i = 9;
+			}
+			else{
+				++i;
+			}
+			LCD_Cursor(1);
+			LCD_WriteData(i + '0');
+			break;
+		}
+		
+		case DEC:{
+			if(i <= 0){
+				i = 0;
+			}
+			else{
+				--i;
+			}
+			LCD_Cursor(1);
+			LCD_WriteData(i + '0');
+			break;
+		}
+		
+		case WAIT:
+			break;
+			
+		case RESET:
+		{
+			i = 0; 
+			LCD_Cursor(1);
+			LCD_WriteData(i + '0');
+			break;
+		}
+	}
 }
 int main(void) {
     /* Insert DDR and PORT initializations */
 	DDRA = 0x00; PORTA = 0xFF;
-	DDRB = 0xFF; PORTB = 0x00;
-	state = init;
-	TimerSet(1);
+	DDRC = 0xFF; PORTC = 0x00;
+	DDRD = 0xFF; PORTD = 0x00;
+	LCD_init();
+	TimerSet(500);
 	TimerOn();
     /* Insert your solution below */
     while (1) {
